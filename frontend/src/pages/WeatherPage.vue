@@ -9,15 +9,12 @@ import windIcon from '@meteocons/svg/fill/wind.svg'
 import TemperatureDisplay from '@/components/TemperatureDisplay.vue'
 import WeatherBackground from '@/components/WeatherBackground.vue'
 import { useWeatherStore } from '@/stores/weather'
+import { formatForecastDate } from '@/utils/weatherFormat'
 
 type WeatherTheme = 'sunny' | 'rainy' | 'windy' | 'cloudy'
 
 const weatherStore = useWeatherStore()
-const selectedForecastIndex = ref(0)
-
-const activeTheme = computed<WeatherTheme>(() =>
-  getWeatherTheme(weatherStore.currentWeather?.condition ?? ''),
-)
+const selectedForecastIndex = ref<number | null>(null)
 
 const formattedUpdatedAt = computed(() => {
   const updatedAtIso = weatherStore.currentWeather?.updatedAtIso
@@ -32,14 +29,32 @@ const formattedUpdatedAt = computed(() => {
   }).format(new Date(updatedAtIso))
 })
 
-const selectedForecastDay = computed(
-  () => weatherStore.forecast?.days[selectedForecastIndex.value] ?? null,
+const selectedForecastDay = computed(() =>
+  selectedForecastIndex.value === null
+    ? null
+    : (weatherStore.forecast?.days[selectedForecastIndex.value] ?? null),
 )
+
+const displayCondition = computed(
+  () => selectedForecastDay.value?.condition ?? weatherStore.currentWeather?.condition ?? '',
+)
+
+const displayTemperature = computed(
+  () => selectedForecastDay.value?.maxTempC ?? weatherStore.currentWeather?.temperatureC ?? 0,
+)
+
+const displayUpdatedLabel = computed(() =>
+  selectedForecastDay.value
+    ? `Forecast for ${formatForecastDate(selectedForecastDay.value.dateIso)}`
+    : `Last updated: ${formattedUpdatedAt.value}`,
+)
+
+const activeTheme = computed<WeatherTheme>(() => getWeatherTheme(displayCondition.value))
 
 watch(
   () => weatherStore.forecast?.days,
   () => {
-    selectedForecastIndex.value = 0
+    selectedForecastIndex.value = null
   },
 )
 
@@ -62,6 +77,14 @@ async function handleSearch(): Promise<void> {
   weatherStore.cityInput = trimmedCity
 
   await weatherStore.searchWeather()
+}
+
+function selectForecastDay(index: number): void {
+  selectedForecastIndex.value = selectedForecastIndex.value === index ? null : index
+}
+
+function resetForecastSelection(): void {
+  selectedForecastIndex.value = null
 }
 
 function getWeatherTheme(condition: string): WeatherTheme {
@@ -109,13 +132,13 @@ function getMeteoconIcon(condition: string): string {
   <main class="relative min-h-screen overflow-hidden text-white">
     <WeatherBackground :theme="activeTheme" />
 
-    <div class="absolute inset-0 -z-10 bg-[#1a0a33]/20" aria-hidden="true" />
+    <div class="absolute inset-0 -z-10 bg-[#1a0a33]/10" aria-hidden="true" />
 
-    <header class="border-b border-white/15 bg-black/10 backdrop-blur-sm">
+    <header class="bg-black/10 backdrop-blur-sm">
       <div class="flex w-full flex-col gap-4 px-4 py-4 sm:px-6 lg:flex-row lg:items-center lg:px-8">
         <div class="mr-auto flex items-center gap-3">
           <img
-            class="size-10"
+            class="weather-icon-float size-10"
             :src="partlyCloudyDayIcon"
             alt=""
             width="40"
@@ -123,7 +146,9 @@ function getMeteoconIcon(condition: string): string {
             aria-hidden="true"
           />
 
-          <p class="text-lg font-semibold tracking-normal">Weather Dashboard</p>
+          <p class="font-[var(--font-heading)] text-lg font-semibold tracking-normal">
+            Weather Dashboard
+          </p>
         </div>
 
         <div class="lg:ml-auto lg:w-[560px]">
@@ -132,14 +157,14 @@ function getMeteoconIcon(condition: string): string {
             <input
               id="city-search"
               v-model="weatherStore.cityInput"
-              class="min-h-12 w-full rounded-2xl border border-white/15 bg-white/[0.08] px-4 text-white shadow-lg outline-none transition placeholder:text-white/65 focus:border-white/70 focus:ring-2 focus:ring-white/30 disabled:opacity-70"
+              class="min-h-12 w-full rounded-full border border-white/15 bg-white/[0.09] px-5 text-white shadow-[0_14px_45px_rgba(20,5,40,0.24)] outline-none backdrop-blur-xl transition placeholder:text-white/60 focus:border-amber-200/60 focus:bg-white/[0.12] focus:ring-2 focus:ring-amber-200/45 disabled:opacity-70"
               type="text"
               placeholder="Enter city"
               :disabled="weatherStore.isLoading"
             />
 
             <button
-              class="flex min-h-12 items-center justify-center gap-2 rounded-2xl bg-white px-5 text-sm font-semibold text-slate-950 transition hover:bg-white/90 focus:outline-none focus:ring-2 focus:ring-white/50 disabled:cursor-not-allowed disabled:opacity-60"
+              class="flex min-h-12 items-center justify-center gap-2 rounded-full bg-white px-5 text-sm font-semibold text-[#2b1055] shadow-[0_12px_35px_rgba(255,255,255,0.18)] transition hover:-translate-y-0.5 hover:bg-amber-50 focus:outline-none focus:ring-2 focus:ring-amber-200/60 disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:translate-y-0"
               type="submit"
               :disabled="weatherStore.isLoading"
             >
@@ -148,7 +173,7 @@ function getMeteoconIcon(condition: string): string {
             </button>
 
             <button
-              class="flex min-h-12 items-center justify-center gap-2 rounded-2xl border border-white/15 bg-white/[0.08] px-5 text-sm font-semibold text-white shadow-lg transition hover:bg-white/15 focus:outline-none focus:ring-2 focus:ring-white/50 disabled:cursor-not-allowed disabled:opacity-60"
+              class="flex min-h-12 items-center justify-center gap-2 rounded-full border border-white/15 bg-white/[0.09] px-5 text-sm font-semibold text-white shadow-[0_14px_45px_rgba(20,5,40,0.24)] backdrop-blur-xl transition hover:-translate-y-0.5 hover:bg-white/15 focus:outline-none focus:ring-2 focus:ring-fuchsia-200/50 disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:translate-y-0"
               type="button"
               :disabled="weatherStore.isLoading"
               @click="weatherStore.refreshWeather"
@@ -235,106 +260,131 @@ function getMeteoconIcon(condition: string): string {
             </div>
 
             <div class="flex max-w-3xl flex-col items-center">
-              <p class="text-xl font-semibold sm:text-2xl">
+              <p class="font-[var(--font-heading)] text-xl font-semibold sm:text-2xl">
                 {{ weatherStore.currentWeather.city }},
                 {{ weatherStore.currentWeather.country }}
               </p>
 
               <img
-                class="mt-6 size-[120px] drop-shadow-2xl sm:size-[170px]"
-                :src="getMeteoconIcon(weatherStore.currentWeather.condition)"
-                :alt="weatherStore.currentWeather.condition"
+                class="weather-icon-float mt-6 size-[120px] drop-shadow-[0_26px_60px_rgba(251,191,36,0.2)] sm:size-[170px]"
+                :src="getMeteoconIcon(displayCondition)"
+                :alt="displayCondition"
                 width="170"
                 height="170"
               />
 
               <div class="mt-3 flex justify-center">
                 <TemperatureDisplay
-                  :temperature="weatherStore.currentWeather.temperatureC"
+                  :temperature="displayTemperature"
                   :city="weatherStore.currentWeather.city"
                 />
               </div>
 
-              <p class="mt-3 text-2xl font-medium sm:text-3xl">
-                {{ weatherStore.currentWeather.condition }}
+              <p class="mt-3 font-[var(--font-heading)] text-2xl font-medium sm:text-3xl">
+                {{ displayCondition }}
               </p>
 
               <p class="mt-3 text-sm text-white/75 sm:text-base">
-                Last updated: {{ formattedUpdatedAt }}
+                {{ displayUpdatedLabel }}
               </p>
+
+              <button
+                v-if="selectedForecastDay"
+                class="mt-4 rounded-full border border-white/15 bg-white/[0.08] px-4 py-2 text-sm font-semibold text-white shadow-lg backdrop-blur-xl transition hover:bg-white/15 focus:outline-none focus:ring-2 focus:ring-amber-200/50"
+                type="button"
+                @click="resetForecastSelection"
+              >
+                Back to live weather
+              </button>
             </div>
           </section>
 
           <section
-            class="flex flex-col gap-6 border-y border-white/20 py-6 text-center sm:flex-row sm:justify-between sm:text-left"
+            class="weather-section-divider flex flex-col gap-7 py-7 text-center sm:flex-row sm:justify-between sm:text-left"
           >
             <div class="sm:w-1/3">
-              <p class="text-xs font-semibold uppercase tracking-[0.14em] text-white/60">
+              <p class="text-[0.68rem] font-semibold uppercase tracking-[0.08em] text-white/55">
                 Condition
               </p>
-              <p class="mt-2 text-xl font-semibold">
-                {{ weatherStore.currentWeather.condition }}
+              <p class="mt-2 font-[var(--font-heading)] text-xl font-semibold">
+                {{ displayCondition }}
               </p>
             </div>
 
             <div class="sm:w-1/3">
-              <p class="text-xs font-semibold uppercase tracking-[0.14em] text-white/60">
+              <p class="text-[0.68rem] font-semibold uppercase tracking-[0.08em] text-white/55">
                 Humidity
               </p>
-              <p class="mt-2 text-xl font-semibold">
+              <p class="mt-2 font-[var(--font-heading)] text-xl font-semibold">
                 {{ weatherStore.currentWeather.humidityPercent }}%
               </p>
             </div>
 
             <div class="sm:w-1/3">
-              <p class="text-xs font-semibold uppercase tracking-[0.14em] text-white/60">Wind</p>
-              <p class="mt-2 text-xl font-semibold">
+              <p class="text-[0.68rem] font-semibold uppercase tracking-[0.08em] text-white/55">
+                Wind
+              </p>
+              <p class="mt-2 font-[var(--font-heading)] text-xl font-semibold">
                 {{ weatherStore.currentWeather.windKmph }} km/h
               </p>
             </div>
           </section>
 
-          <section class="pt-8">
-            <h2 class="text-2xl font-semibold">5-Day Forecast</h2>
+          <section class="pt-10">
+            <h2 class="font-[var(--font-heading)] text-2xl font-semibold">5-Day Forecast</h2>
 
             <div
-              class="-mx-4 mt-4 flex gap-5 overflow-x-auto border-y border-white/20 px-4 py-4 sm:mx-0 sm:px-0"
+              class="forecast-strip mt-5 grid grid-cols-2 gap-4 py-5 lg:grid-cols-5"
             >
               <button
                 v-for="(day, index) in weatherStore.forecast.days"
                 :key="day.dateIso"
-                class="min-w-40 flex-1 text-left transition hover:text-white disabled:cursor-default"
-                :class="selectedForecastIndex === index ? 'text-white' : 'text-white/70'"
+                class="w-full rounded-[1.25rem] border p-4 text-left shadow-lg backdrop-blur-xl transition duration-200 hover:-translate-y-1 hover:scale-[1.02] hover:shadow-[0_20px_55px_rgba(20,5,40,0.34)] disabled:cursor-default"
+                :class="
+                  selectedForecastIndex === index
+                    ? 'border-amber-200/45 bg-white/[0.16] text-white'
+                    : index === 0
+                      ? 'border-fuchsia-200/25 bg-fuchsia-200/[0.13] text-white'
+                      : 'border-white/12 bg-white/[0.07] text-white/72 hover:border-white/25 hover:text-white'
+                "
                 type="button"
-                @click="selectedForecastIndex = index"
+                @click="selectForecastDay(index)"
               >
-                <p class="text-sm font-semibold">
-                  {{ day.dateIso }}
-                </p>
+                <div class="flex items-center justify-between gap-2">
+                  <p class="text-sm font-semibold">
+                    {{ formatForecastDate(day.dateIso) }}
+                  </p>
+                  <span
+                    v-if="selectedForecastIndex === index || index === 0"
+                    class="rounded-full bg-amber-200 px-2.5 py-1 text-[0.65rem] font-bold uppercase tracking-[0.06em] text-[#2b1055]"
+                  >
+                    {{ selectedForecastIndex === index ? 'Selected' : 'Today' }}
+                  </span>
+                </div>
 
                 <img
-                  class="mt-3 size-14"
+                  class="weather-icon-float mt-4 size-14 drop-shadow-[0_12px_24px_rgba(251,191,36,0.18)]"
                   :src="getMeteoconIcon(day.condition)"
                   :alt="day.condition"
                   width="64"
                   height="64"
                 />
 
-                <p class="mt-3 text-sm text-white/75">
+                <p class="mt-3 text-sm text-white/72">
                   {{ day.condition }}
                 </p>
 
-                <p class="mt-2 text-sm font-semibold">Min {{ day.minTempC }}°C</p>
-                <p class="text-sm font-semibold">Max {{ day.maxTempC }}°C</p>
+                <p class="mt-3 text-sm font-semibold">Min {{ day.minTempC }}°C</p>
+                <p class="text-sm font-semibold text-amber-100">Max {{ day.maxTempC }}°C</p>
               </button>
             </div>
 
             <div v-if="selectedForecastDay" class="pt-5">
-              <p class="text-sm font-semibold uppercase tracking-[0.14em] text-white/60">
+              <p class="text-[0.68rem] font-semibold uppercase tracking-[0.08em] text-white/55">
                 Selected forecast detail
               </p>
               <div
-                class="mt-3 flex flex-col gap-4 border-b border-white/20 pb-5 sm:flex-row sm:justify-between"
+                class="forecast-detail-divider mt-3 flex flex-col gap-4 pb-5 sm:flex-row sm:justify-between"
               >
                 <p>
                   <span class="block text-white/60">Date</span>

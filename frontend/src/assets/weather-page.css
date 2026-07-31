@@ -1,0 +1,50 @@
+.weather-icon-float {
+  animation: weather-icon-float 4.8s ease-in-out infinite;
+}
+
+.weather-section-divider,
+.forecast-strip,
+.forecast-detail-divider {
+  position: relative;
+}
+
+.weather-section-divider::before,
+.weather-section-divider::after,
+.forecast-strip::before,
+.forecast-strip::after,
+.forecast-detail-divider::after {
+  position: absolute;
+  right: 0;
+  left: 0;
+  height: 1px;
+  content: '';
+  background: linear-gradient(90deg, transparent, rgb(255 255 255 / 0.28), transparent);
+}
+
+.weather-section-divider::before,
+.forecast-strip::before {
+  top: 0;
+}
+
+.weather-section-divider::after,
+.forecast-strip::after,
+.forecast-detail-divider::after {
+  bottom: 0;
+}
+
+@keyframes weather-icon-float {
+  0%,
+  100% {
+    transform: translateY(0) rotate(0deg);
+  }
+
+  50% {
+    transform: translateY(-0.45rem) rotate(1.5deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .weather-icon-float {
+    animation: none;
+  }
+}

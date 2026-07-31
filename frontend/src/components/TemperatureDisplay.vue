@@ -192,7 +192,9 @@ onBeforeUnmount(() => {
 
 <template>
   <div class="flex flex-wrap items-center justify-center gap-3" aria-live="polite">
-    <div class="flex items-end font-semibold leading-none tracking-normal">
+    <div
+      class="flex items-end font-black leading-none tracking-normal text-white drop-shadow-[0_12px_38px_rgba(162,57,202,0.45)]"
+    >
       <span
         v-for="character in characters"
         :key="character.id"
