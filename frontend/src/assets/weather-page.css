@@ -1,5 +1,7 @@
 .weather-icon-float {
   animation: weather-icon-float 4.8s ease-in-out infinite;
+  backface-visibility: hidden;
+  will-change: transform;
 }
 
 .weather-section-divider,
@@ -35,11 +37,11 @@
 @keyframes weather-icon-float {
   0%,
   100% {
-    transform: translateY(0) rotate(0deg);
+    transform: translate3d(0, 0, 0) rotate(0deg);
   }
 
   50% {
-    transform: translateY(-0.45rem) rotate(1.5deg);
+    transform: translate3d(0, -0.45rem, 0) rotate(1.5deg);
   }
 }
 

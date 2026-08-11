@@ -1,11 +1,11 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 import { Icon } from '@iconify/vue'
-import clearDayIcon from '@meteocons/svg/fill/clear-day.svg'
-import overcastDayIcon from '@meteocons/svg/fill/overcast-day.svg'
-import partlyCloudyDayIcon from '@meteocons/svg/fill/partly-cloudy-day.svg'
-import rainIcon from '@meteocons/svg/fill/rain.svg'
-import windIcon from '@meteocons/svg/fill/wind.svg'
+import clearDayIconSvg from '@meteocons/svg/fill/clear-day.svg?raw'
+import overcastDayIconSvg from '@meteocons/svg/fill/overcast-day.svg?raw'
+import partlyCloudyDayIconSvg from '@meteocons/svg/fill/partly-cloudy-day.svg?raw'
+import rainIconSvg from '@meteocons/svg/fill/rain.svg?raw'
+import windIconSvg from '@meteocons/svg/fill/wind.svg?raw'
 import TemperatureDisplay from '@/components/TemperatureDisplay.vue'
 import WeatherBackground from '@/components/WeatherBackground.vue'
 import { useWeatherStore } from '@/stores/weather'
@@ -15,6 +15,12 @@ type WeatherTheme = 'sunny' | 'rainy' | 'windy' | 'cloudy'
 
 const weatherStore = useWeatherStore()
 const selectedForecastIndex = ref<number | null>(null)
+
+const clearDayIcon = createStaticSvgDataUri(clearDayIconSvg)
+const overcastDayIcon = createStaticSvgDataUri(overcastDayIconSvg)
+const partlyCloudyDayIcon = createStaticSvgDataUri(partlyCloudyDayIconSvg)
+const rainIcon = createStaticSvgDataUri(rainIconSvg)
+const windIcon = createStaticSvgDataUri(windIconSvg)
 
 const formattedUpdatedAt = computed(() => {
   const updatedAtIso = weatherStore.currentWeather?.updatedAtIso
@@ -85,6 +91,12 @@ function selectForecastDay(index: number): void {
 
 function resetForecastSelection(): void {
   selectedForecastIndex.value = null
+}
+
+function createStaticSvgDataUri(svg: string): string {
+  const staticSvg = svg.replace(/<animate(?:Transform)?\b[^>]*\/>/g, '')
+
+  return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(staticSvg)}`
 }
 
 function getWeatherTheme(condition: string): WeatherTheme {
@@ -363,7 +375,7 @@ function getMeteoconIcon(condition: string): string {
                 </div>
 
                 <img
-                  class="weather-icon-float mt-4 size-14 drop-shadow-[0_12px_24px_rgba(251,191,36,0.18)]"
+                  class="mt-4 size-14 drop-shadow-[0_12px_24px_rgba(251,191,36,0.18)]"
                   :src="getMeteoconIcon(day.condition)"
                   :alt="day.condition"
                   width="64"
